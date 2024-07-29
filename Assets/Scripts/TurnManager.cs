@@ -17,11 +17,17 @@ public class TurnManager : NetworkBehaviour
             Debug.Log("Breakmpoint");
     }
 
-    public void NextTurn(){
-        if(!IsOwner) return;
-        if(!IsServer) return;
+    [Rpc(SendTo.Server)]
+    public void NextTurnRpc(){
         currentPlayerClientId.Value++;
         int connectedPlayerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
         if((int)currentPlayerClientId.Value >= connectedPlayerCount) currentPlayerClientId.Value = 0;
+    }
+
+    static public bool IsMyTurn(){
+        if(GameManager.Instance.turnManager.currentPlayerClientId.Value == NetworkManager.Singleton.LocalClientId)
+            return true;
+        else
+            return false;
     }
 }

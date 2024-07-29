@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerUIManager : MonoBehaviour
+public class PlayerUIManager : NetworkBehaviour
 {
     TMP_Text gameStateDisplay;
     TMP_Text turnStateDisplay;
@@ -30,7 +31,10 @@ public class PlayerUIManager : MonoBehaviour
 
     void SetupUpdate(){
         gameStateDisplay.text = "SETUP";
-        turnStateDisplay.text = $"{GameManager.Instance.playerManager.playerDatas[GameManager.Instance.turnManager.currentPlayerClientId.Value].name}'S TURN";
+        
+        ulong currentTurnsPlayerId = GameManager.Instance.turnManager.currentPlayerClientId.Value;
+        if(currentTurnsPlayerId == NetworkManager.Singleton.LocalClientId) turnStateDisplay.text = "YOUR TURN";
+        else turnStateDisplay.text = $"{GameManager.Instance.playerManager.playerDatas[currentTurnsPlayerId].name}'S TURN";
     }
 
     void PlayingUpdate(){

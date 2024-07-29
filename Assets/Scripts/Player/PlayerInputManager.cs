@@ -25,11 +25,13 @@ public class PlayerInputManager : NetworkBehaviour
 
     void Update(){
         if(!IsOwner) return;
-        if(IsServer) if(Input.GetKeyDown(KeyCode.N)) GameManager.Instance.turnManager.NextTurn();
+        if(TurnManager.IsMyTurn()) if(Input.GetKeyDown(KeyCode.N)) GameManager.Instance.turnManager.NextTurnRpc();
 
 
         if(GetHoveredTile() != null){
-            if(Input.GetKeyDown(KeyCode.M)) MoveUnitRpc(GetHoveredTile().gridPosition);
+            if(Input.GetKeyDown(KeyCode.M)){
+                if(TurnManager.IsMyTurn()) MoveUnitRpc(GetHoveredTile().gridPosition);
+            } 
         }
     }
 

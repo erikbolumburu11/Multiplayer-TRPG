@@ -26,4 +26,5 @@ public class PlayerManager : NetworkBehaviour
     void Awake(){
         playerDatas = new();
     }
+
 }
