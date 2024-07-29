@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class UnitManager : NetworkBehaviour
 {
-    public Dictionary<int, PlayerData> playerDatas;
+    public Dictionary<ulong, GameObject> playerUnitMap;
 
-    void Start(){
-        playerDatas = new();
+    void Awake(){
+        playerUnitMap = new();
     }
 }
