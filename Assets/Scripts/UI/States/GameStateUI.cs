@@ -7,11 +7,13 @@ public abstract class GameStateUI
 {
     TMP_Text gameStateDisplay;
     TMP_Text turnStateDisplay;
+    protected UIElements uiElements;
 
 
     public virtual void EnterState(){
         gameStateDisplay = GameObject.Find("Game State Display").GetComponentInChildren<TMP_Text>();
         turnStateDisplay = GameObject.Find("Turn State Display").GetComponentInChildren<TMP_Text>();
+        uiElements = GameManager.Instance.UIElements;
     }
 
     public virtual void Update(){

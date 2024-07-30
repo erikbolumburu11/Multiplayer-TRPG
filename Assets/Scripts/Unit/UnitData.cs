@@ -7,5 +7,5 @@ public class UnitData : ScriptableObject
 {
     public string unitName;
     public float speed;
-    public GameObject prefab;
+    public string prefabResourceDir;
 }

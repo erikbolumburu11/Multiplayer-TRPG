@@ -19,6 +19,9 @@ public class GameManager : MonoBehaviour
     public GameStateManager gameStateManager;
     public TurnManager turnManager;
     public PlayerManager playerManager;
+    public PlayerPartyManager playerPartyManager;
+    public UIElements UIElements;
+    public LayerMask groundLayer;
 
     void Awake(){
         instance = this;

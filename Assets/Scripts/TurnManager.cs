@@ -12,11 +12,6 @@ public class TurnManager : NetworkBehaviour
         if(!IsServer) return;
     }
 
-    void Update(){
-        if(Input.GetKeyDown(KeyCode.B)) 
-            Debug.Log("Breakmpoint");
-    }
-
     [Rpc(SendTo.Server)]
     public void NextTurnRpc(){
         currentPlayerClientId.Value++;

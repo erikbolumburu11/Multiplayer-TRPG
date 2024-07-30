@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: Blue
   speed: 5
-  prefab: {fileID: 0}
+  prefabResourceDir: Unit Prefabs/Blue

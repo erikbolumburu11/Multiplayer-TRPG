@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitName: Red
   speed: 3
-  prefab: {fileID: 0}
+  prefabResourceDir: Unit Prefabs/Red

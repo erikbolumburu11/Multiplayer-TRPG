@@ -64,6 +64,7 @@ public class GridManager : MonoBehaviour
             for (int y = -1; y <= 1; y++)
             {
                 if(x == 0 && y == 0) continue;
+                if(x != 0 && y != 0) continue;
 
                 int checkX = tile.gridPosition.x + x;
                 int checkY = tile.gridPosition.y + y;

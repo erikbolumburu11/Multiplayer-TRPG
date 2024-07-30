@@ -12,4 +12,8 @@ public class UnitCard : MonoBehaviour
         if(unitData == null) return;
         unitNameObject.text = unitData.unitName;
     }
+
+    public void SelectCard(){
+        GameManager.Instance.playerPartyManager.selectedUnitCard = unitData;
+    }
 }

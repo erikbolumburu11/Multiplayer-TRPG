@@ -8,7 +8,6 @@ using UnityEngine;
 public class PlayerInputManager : NetworkBehaviour
 {
     GridManager gridManager;
-    [SerializeField] LayerMask groundLayer;
     [SerializeField] GameObject unitPrefab;
 
     void Awake(){
@@ -19,7 +18,6 @@ public class PlayerInputManager : NetworkBehaviour
         base.OnNetworkSpawn();
         InitializePlayerRpc();
         if(!IsOwner) return;
-        SpawnUnitRpc();
     }
 
 
@@ -56,23 +54,12 @@ public class PlayerInputManager : NetworkBehaviour
         unitBehaviour.path = GameManager.Instance.pathfinder.FindPath(unitBehaviour.occupyingTile, gridManager.tiles[targetTilePos.x, targetTilePos.y]);
     }
 
-    [Rpc(SendTo.Server)]
-    void SpawnUnitRpc(RpcParams rpcParams = default){
-        ulong clientId = rpcParams.Receive.SenderClientId;
-        UnitManager unitManager = GameManager.Instance.unitManager;
-
-        GameObject unit = Instantiate(unitPrefab);
-        NetworkObject unitNetworkObject = unit.GetComponent<NetworkObject>();
-        unitNetworkObject.Spawn();
-
-        unitManager.playerUnitMap[clientId] = unit;
-    }
-
-    public GridTile GetHoveredTile(){
+    public static GridTile GetHoveredTile(){
+        GridManager gridManager = GameManager.Instance.gridManager;
         RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, groundLayer)) {
-            Vector2Int hoveredTilePos = new Vector2Int((int)Mathf.Floor(hit.point.x), (int)Mathf.Floor(hit.point.z));
+        if (Physics.Raycast(ray, out hit, GameManager.Instance.groundLayer)) {
+            Vector2Int hoveredTilePos = new Vector2Int((int)Mathf.Floor(hit.point.x) / (int)gridManager.tileSize, (int)Mathf.Floor(hit.point.z) / (int)gridManager.tileSize);
             return gridManager.tiles[hoveredTilePos.x, hoveredTilePos.y];
         }
         else return null;
