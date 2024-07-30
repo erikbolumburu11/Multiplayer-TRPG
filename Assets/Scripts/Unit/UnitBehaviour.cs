@@ -8,8 +8,8 @@ public class UnitBehaviour : NetworkBehaviour
     public GridTile occupyingTile;
     public Stack<GridTile> path;
     GridTile tileMovingTo;
+    public UnitData unitData;
 
-    public float speed;
 
     void Start(){
         if(!IsServer) return;
@@ -30,7 +30,7 @@ public class UnitBehaviour : NetworkBehaviour
         }
 
         if(tileMovingTo != null)
-            transform.position = Vector3.MoveTowards(transform.position, tileMovingTo.worldPosition, speed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, tileMovingTo.worldPosition, unitData.speed * Time.deltaTime);
     }
 
     void HasReachedNextTile(){

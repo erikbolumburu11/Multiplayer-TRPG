@@ -26,6 +26,7 @@ public class PlayerInputManager : NetworkBehaviour
     void Update(){
         if(!IsOwner) return;
         if(TurnManager.IsMyTurn()) if(Input.GetKeyDown(KeyCode.N)) GameManager.Instance.turnManager.NextTurnRpc();
+        if(Input.GetKeyDown(KeyCode.B)) ChangeStateRpc();
 
 
         if(GetHoveredTile() != null){
@@ -36,6 +37,11 @@ public class PlayerInputManager : NetworkBehaviour
     }
 
     [Rpc(SendTo.Everyone)]
+    public void ChangeStateRpc(){
+        GameManager.Instance.gameStateManager.RequestStateChangeRpc(GameStateKey.PLAYING);
+    }
+
+    [Rpc(SendTo.NotMe)]
     public void InitializePlayerRpc(RpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
