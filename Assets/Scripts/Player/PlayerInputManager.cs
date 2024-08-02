@@ -23,35 +23,20 @@ public class PlayerInputManager : NetworkBehaviour
 
     void Update(){
         if(!IsOwner) return;
-        if(TurnManager.IsMyTurn()) if(Input.GetKeyDown(KeyCode.N)) GameManager.Instance.turnManager.NextTurnRpc();
-        if(Input.GetKeyDown(KeyCode.B)) ChangeStateRpc();
-
 
         if(GetHoveredTile() != null){
             if(Input.GetKeyDown(KeyCode.M)){
-                if(TurnManager.IsMyTurn()) MoveUnitRpc(GetHoveredTile().gridPosition);
+                if(TurnManager.IsMyTurn()) GameManager.Instance.unitManager.MoveSelectedUnitRpc(GetHoveredTile().gridPosition);
             } 
         }
     }
 
     [Rpc(SendTo.Everyone)]
-    public void ChangeStateRpc(){
-        GameManager.Instance.gameStateManager.RequestStateChangeRpc(GameStateKey.PLAYING);
-    }
-
-    [Rpc(SendTo.NotMe)]
     public void InitializePlayerRpc(RpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
+        GameManager.Instance.unitManager.playerUnitMap.Add(clientId, new());
         GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId));
-    }
-
-    [Rpc(SendTo.Server)]
-    void MoveUnitRpc(Vector2Int targetTilePos, RpcParams rpcParams = default) {
-        UnitManager unitManager = GameManager.Instance.unitManager;
-        GameObject unit = unitManager.playerUnitMap[rpcParams.Receive.SenderClientId];
-        UnitBehaviour unitBehaviour = unit.GetComponent<UnitBehaviour>();
-        unitBehaviour.path = GameManager.Instance.pathfinder.FindPath(unitBehaviour.occupyingTile, gridManager.tiles[targetTilePos.x, targetTilePos.y]);
     }
 
     public static GridTile GetHoveredTile(){

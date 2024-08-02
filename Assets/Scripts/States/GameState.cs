@@ -17,8 +17,7 @@ public abstract class GameState : NetworkBehaviour
     }
 
     public virtual void Update(){
-        if(GameManager.Instance.gameStateManager.state.Value != key) return;
-        stateUI.Update();
+        if(NetworkManager.Singleton.IsConnectedClient) stateUI.Update();
     }
 
     public virtual void ExitState(){

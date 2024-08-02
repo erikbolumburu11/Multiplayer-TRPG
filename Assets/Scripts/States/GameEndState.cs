@@ -9,4 +9,10 @@ public class GameEndState : GameState
         stateUI = new GameEndStateUI();
         key = GameStateKey.GAME_END;
     }
+
+    public override void Update()
+    {
+        if(GameManager.Instance.gameStateManager.state.Value != key) return;
+        base.Update();
+    }
 }

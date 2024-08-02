@@ -13,6 +13,7 @@ public enum GameStateKey {
 public class GameStateManager : NetworkBehaviour { 
     public NetworkVariable<GameStateKey> state;
     public Dictionary<GameStateKey, GameState> stateMap;
+    bool firstStateChange = true;
 
     void Start(){
         if(IsServer) state = new();
@@ -27,10 +28,6 @@ public class GameStateManager : NetworkBehaviour {
 
         GameEndState gameEndState = GetComponent<GameEndState>();
         stateMap.Add(GameStateKey.GAME_END, gameEndState);
-
-
-        setupState.EnterState();
-        RequestStateChangeRpc(GameStateKey.SETUP);
 
         if(!IsServer) return;
     }
@@ -47,7 +44,8 @@ public class GameStateManager : NetworkBehaviour {
 
     [Rpc(SendTo.ClientsAndHost)]
     public void ChangeStateOnClientsRpc(GameStateKey gameStateKey, RpcParams rpcParams = default){
-        stateMap[state.Value].ExitState();
+        if(!firstStateChange) stateMap[state.Value].ExitState();
+        firstStateChange = true;
         stateMap[gameStateKey].EnterState();
     }
 }

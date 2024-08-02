@@ -9,4 +9,10 @@ public class PlayingState : GameState
         stateUI = new PlayingStateUI();
         key = GameStateKey.PLAYING;
     }
+
+    public override void Update()
+    {
+        if(GameManager.Instance.gameStateManager.state.Value != key) return;
+        base.Update();
+    }
 }

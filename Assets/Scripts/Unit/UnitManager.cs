@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class UnitManager : NetworkBehaviour
 {
-    public Dictionary<ulong, GameObject> playerUnitMap;
+    public Dictionary<ulong, List<GameObject>> playerUnitMap;
+    public GameObject selectedUnit;
 
     void Awake(){
         playerUnitMap = new();
@@ -17,11 +18,32 @@ public class UnitManager : NetworkBehaviour
         GridTile tile = GameManager.Instance.gridManager.tiles[spawnGridPos.x, spawnGridPos.y];
 
         GameObject unit;
-        unit = Instantiate(Resources.Load(prefabResourceDir, typeof(GameObject)), tile.worldPosition, Quaternion.identity) as GameObject;
+        GameObject unitPrefab = Resources.Load(prefabResourceDir, typeof(GameObject)) as GameObject;
+        unit = Instantiate(unitPrefab, GridWorldPosToGameObjectPos(tile.worldPosition, unitPrefab), Quaternion.identity);
+        unit.GetComponent<UnitBehaviour>().occupyingTile = tile;
+        unit.GetComponent<UnitBehaviour>().ownerClientId = new(){Value = clientId};
         NetworkObject unitNetworkObject = unit.GetComponent<NetworkObject>();
         unitNetworkObject.Spawn();
 
-        unitManager.playerUnitMap[clientId] = unit;
+        unitManager.playerUnitMap[clientId].Add(unit);
+
+        GameManager.Instance.turnManager.NextTurnRpc();
+    }
+
+    [Rpc(SendTo.Server)]
+    public void MoveSelectedUnitRpc(Vector2Int targetTilePos, RpcParams rpcParams = default) {
+        UnitBehaviour unitBehaviour = TurnManager.GetCurrentTurnsUnit().GetComponent<UnitBehaviour>();
+        unitBehaviour.path = GameManager.Instance.pathfinder.FindPath(unitBehaviour.occupyingTile, GameManager.Instance.gridManager.tiles[targetTilePos.x, targetTilePos.y]);
+        GameManager.Instance.turnManager.NextTurnRpc();
+    }
+
+    // Adds half the height of the GameObject so it isn't half way in the ground
+    public static Vector3 GridWorldPosToGameObjectPos(Vector3 gridWorldPos, GameObject gameObject){
+        return new Vector3(
+            gridWorldPos.x,
+            gridWorldPos.y + (gameObject.transform.localScale.y / 2),
+            gridWorldPos.z
+        );
     }
 
 }

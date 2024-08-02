@@ -11,10 +11,15 @@ public class JoinUI : MonoBehaviour
     public void HostJoin(){
         networkManager.StartHost();
         joinSettingsObject.SetActive(false);
+
+        GameManager.Instance.gameStateManager.RequestStateChangeRpc(GameStateKey.SETUP);
     }
 
     public void ClientJoin(){
         networkManager.StartClient();
         joinSettingsObject.SetActive(false);
+
+        GameManager.Instance.gameStateManager.stateMap[GameStateKey.SETUP].EnterState();
+        GameManager.Instance.gameStateManager.RequestStateChangeRpc(GameStateKey.SETUP);
     }
 }

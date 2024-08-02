@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Scripting;
 
-public class PlayerPartyManager : MonoBehaviour
+public class PlayerPartyManager : NetworkBehaviour
 {
     public List<UnitData> unitHand;
     public UnitData selectedUnitCard;
@@ -12,6 +12,10 @@ public class PlayerPartyManager : MonoBehaviour
     GameObject instantiatedUnitPlacementPreview;
 
     void Update(){
+        if(GameManager.Instance.gameStateManager.state.Value != GameStateKey.SETUP || !TurnManager.IsMyTurn()){
+            if(instantiatedUnitPlacementPreview != null) Destroy(instantiatedUnitPlacementPreview);
+            return;
+        } 
         if(selectedUnitCard == null && instantiatedUnitPlacementPreview != null) Destroy(instantiatedUnitPlacementPreview);
 
         if(selectedUnitCard != null && instantiatedUnitPlacementPreview == null){
@@ -46,4 +50,17 @@ public class PlayerPartyManager : MonoBehaviour
             uiElements.unitCards.GetComponent<UnitCardList>().cards.Add(card.GetComponent<UnitCard>());
         }
     }
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    public void IsClientsHandEmptyRpc(RpcParams rpcParams = default){
+        GameManager gameManager = GameManager.Instance;
+        ulong lastPlayerClientId = (ulong)gameManager.playerManager.playerDatas.Count - 1;
+        bool isLastPlayer = gameManager.turnManager.currentPlayerClientId.Value == lastPlayerClientId;
+        
+        if(gameManager.playerPartyManager.unitHand.Count != 0) return;
+        if(isLastPlayer) gameManager.gameStateManager.RequestStateChangeRpc(GameStateKey.PLAYING);
+        gameManager.turnManager.NextTurnRpc();
+        
+    }
+    
 }
