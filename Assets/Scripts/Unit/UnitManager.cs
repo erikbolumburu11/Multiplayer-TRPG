@@ -25,16 +25,22 @@ public class UnitManager : NetworkBehaviour
         NetworkObject unitNetworkObject = unit.GetComponent<NetworkObject>();
         unitNetworkObject.Spawn();
 
-        unitManager.playerUnitMap[clientId].Add(unit);
+        AddUnitToPlayerUnitMapRpc(unit, clientId);
 
         GameManager.Instance.turnManager.NextTurnRpc();
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void AddUnitToPlayerUnitMapRpc(NetworkObjectReference networkObjectReference, ulong clientId, RpcParams rpcParams = default){
+        GameManager.Instance.unitManager.playerUnitMap[clientId].Add(networkObjectReference);
     }
 
     [Rpc(SendTo.Server)]
     public void MoveSelectedUnitRpc(Vector2Int targetTilePos, RpcParams rpcParams = default) {
         UnitBehaviour unitBehaviour = TurnManager.GetCurrentTurnsUnit().GetComponent<UnitBehaviour>();
-        unitBehaviour.path = GameManager.Instance.pathfinder.FindPath(unitBehaviour.occupyingTile, GameManager.Instance.gridManager.tiles[targetTilePos.x, targetTilePos.y]);
-        GameManager.Instance.turnManager.NextTurnRpc();
+        Stack<GridTile> path = GameManager.Instance.pathfinder.FindPath(unitBehaviour.occupyingTile, GameManager.Instance.gridManager.tiles[targetTilePos.x, targetTilePos.y]);
+        unitBehaviour.path = path;
+        if(path != null) GameManager.Instance.turnManager.NextTurnRpc();
     }
 
     // Adds half the height of the GameObject so it isn't half way in the ground

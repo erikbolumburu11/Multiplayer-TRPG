@@ -14,21 +14,21 @@ public class TurnManager : NetworkBehaviour
         if(!IsServer) return;
     }
 
+    void Update(){
+        SetSelectedUnitRpc();
+    }
+
     [Rpc(SendTo.Server)]
     public void NextTurnRpc(){
         currentPlayerClientId.Value++;
         currentTurn.Value++;
         int connectedPlayerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
         if((int)currentPlayerClientId.Value >= connectedPlayerCount) currentPlayerClientId.Value = 0;
-
-        SetSelectedUnit();
     }
 
-    public static bool IsMyTurn(){
-        if(GameManager.Instance.turnManager.currentPlayerClientId.Value == NetworkManager.Singleton.LocalClientId)
-            return true;
-        else
-            return false;
+    [Rpc(SendTo.Everyone)]
+    public void SetSelectedUnitRpc(RpcParams rpcParams = default){
+        SetSelectedUnit();
     }
 
     public void SetSelectedUnit(){
@@ -36,8 +36,16 @@ public class TurnManager : NetworkBehaviour
         ulong currentPlayerClientId = GameManager.Instance.turnManager.currentPlayerClientId.Value;
         int currentTurn = GameManager.Instance.turnManager.currentTurn.Value;
 
-        unitManager.selectedUnit = unitManager.playerUnitMap[currentPlayerClientId]
-            [currentTurn % unitManager.playerUnitMap[currentPlayerClientId].Count];
+        if(unitManager.playerUnitMap[currentPlayerClientId].Count != 0) 
+            unitManager.selectedUnit = unitManager.playerUnitMap[currentPlayerClientId]
+                [currentTurn % unitManager.playerUnitMap[currentPlayerClientId].Count];
+    }
+
+    public static bool IsMyTurn(){
+        if(GameManager.Instance.turnManager.currentPlayerClientId.Value == NetworkManager.Singleton.LocalClientId)
+            return true;
+        else
+            return false;
     }
 
     public static UnitBehaviour GetCurrentTurnsUnit(){

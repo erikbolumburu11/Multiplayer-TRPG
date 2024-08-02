@@ -32,6 +32,10 @@ public class GameStateManager : NetworkBehaviour {
         if(!IsServer) return;
     }
 
+    public static bool CompareCurrentState(GameStateKey comparisonKey){
+        return comparisonKey == GameManager.Instance.gameStateManager.state.Value;
+    }
+
     void Update(){
         stateMap[state.Value].Update();
     }

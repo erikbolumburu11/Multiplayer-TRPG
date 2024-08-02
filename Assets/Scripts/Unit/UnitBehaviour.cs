@@ -26,7 +26,8 @@ public class UnitBehaviour : NetworkBehaviour
     }
 
     void Update(){
-        SetSelectionDecalVisibility();
+        if(GameStateManager.CompareCurrentState(GameStateKey.PLAYING)) SetSelectionDecalVisibility();
+
         if(!IsServer) return;
         Move();
         HasReachedNextTile();
