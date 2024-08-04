@@ -12,6 +12,8 @@ public class Pathfinder : MonoBehaviour
     }
 
     public Stack<GridTile> FindPath(GridTile startTile, GridTile targetTile){
+        if(!targetTile.walkable) return null;
+
         List<GridTile> openSet = new List<GridTile>();
         HashSet<GridTile> closedSet = new HashSet<GridTile>();
 
@@ -32,7 +34,7 @@ public class Pathfinder : MonoBehaviour
                 return RetracePath(startTile, targetTile);
             }
 
-            foreach(GridTile adjacency in gridManager.GetAdjacentTiles(currentTile)){
+            foreach(GridTile adjacency in GridManager.GetAdjacentTiles(currentTile.gridPosition)){
                 if(!adjacency.walkable || closedSet.Contains(adjacency)) continue;
 
                 int newMovementCostToAdjacency = currentTile.gCost + GridTile.Distance(currentTile, adjacency);

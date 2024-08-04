@@ -50,6 +50,6 @@ public class GameStateManager : NetworkBehaviour {
     public void ChangeStateOnClientsRpc(GameStateKey gameStateKey, RpcParams rpcParams = default){
         if(!firstStateChange) stateMap[state.Value].ExitState();
         firstStateChange = true;
-        stateMap[gameStateKey].EnterState();
+        GameManager.Instance.gameStateManager.stateMap[gameStateKey].EnterState();
     }
 }

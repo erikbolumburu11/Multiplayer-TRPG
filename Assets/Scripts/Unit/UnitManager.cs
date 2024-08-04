@@ -20,8 +20,10 @@ public class UnitManager : NetworkBehaviour
         GameObject unit;
         GameObject unitPrefab = Resources.Load(prefabResourceDir, typeof(GameObject)) as GameObject;
         unit = Instantiate(unitPrefab, GridWorldPosToGameObjectPos(tile.worldPosition, unitPrefab), Quaternion.identity);
-        unit.GetComponent<UnitBehaviour>().occupyingTile = tile;
+
         unit.GetComponent<UnitBehaviour>().ownerClientId = new(){Value = clientId};
+        unit.GetComponent<UnitBehaviour>().occupyingTile.Value = tile.gridPosition;
+
         NetworkObject unitNetworkObject = unit.GetComponent<NetworkObject>();
         unitNetworkObject.Spawn();
 
@@ -38,7 +40,12 @@ public class UnitManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void MoveSelectedUnitRpc(Vector2Int targetTilePos, RpcParams rpcParams = default) {
         UnitBehaviour unitBehaviour = TurnManager.GetCurrentTurnsUnit().GetComponent<UnitBehaviour>();
-        Stack<GridTile> path = GameManager.Instance.pathfinder.FindPath(unitBehaviour.occupyingTile, GameManager.Instance.gridManager.tiles[targetTilePos.x, targetTilePos.y]);
+        GridManager gridManager = GameManager.Instance.gridManager;
+
+        Vector2Int startTilePos = unitBehaviour.occupyingTile.Value;
+        GridTile startTile = gridManager.tiles[startTilePos.x, startTilePos.y];
+
+        Stack<GridTile> path = GameManager.Instance.pathfinder.FindPath(startTile, GameManager.Instance.gridManager.tiles[targetTilePos.x, targetTilePos.y]);
         unitBehaviour.path = path;
         if(path != null) GameManager.Instance.turnManager.NextTurnRpc();
     }
@@ -51,5 +58,4 @@ public class UnitManager : NetworkBehaviour
             gridWorldPos.z
         );
     }
-
 }

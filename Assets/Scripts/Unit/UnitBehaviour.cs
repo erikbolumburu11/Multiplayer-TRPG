@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class UnitBehaviour : NetworkBehaviour
 {
-    public GridTile occupyingTile;
+    public NetworkVariable<Vector2Int> occupyingTile;
     public Stack<GridTile> path;
     GridTile tileMovingTo;
     public UnitData unitData;
@@ -56,7 +56,7 @@ public class UnitBehaviour : NetworkBehaviour
         if(tileMovingTo == null) return;
 
         if(Vector3.Distance(transform.position, UnitManager.GridWorldPosToGameObjectPos(tileMovingTo.worldPosition, gameObject)) < 0.05f){
-            occupyingTile = tileMovingTo;
+            occupyingTile.Value = tileMovingTo.gridPosition;
             if(path.Count > 0) tileMovingTo = path.Pop();
             else tileMovingTo = null;
         }

@@ -2,12 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GridTile {
     public Vector2Int gridPosition;
     public Vector3 worldPosition;
     public bool walkable;
     public GridTile parent;
+    public Image overlayImage;
 
     public int gCost;
     public int hCost;
@@ -23,6 +25,15 @@ public class GridTile {
         walkable = !Physics.CheckSphere(worldPosition, (tileSize / 2) - 0.1f, GameManager.Instance.gridManager.unwalkableMask);
     }
 
+    public void ShowOverlay(Color color){
+        overlayImage.enabled = true;
+        overlayImage.color = color;
+    }
+
+    public void HideOverlay(){
+        overlayImage.enabled = false;
+    }
+
     public static int Distance(GridTile a, GridTile b){
         int dstX = Mathf.Abs(a.gridPosition.x - b.gridPosition.x);
         int dstY = Mathf.Abs(a.gridPosition.y - b.gridPosition.y);
@@ -33,6 +44,11 @@ public class GridTile {
             return 14 * dstX + 10 * (dstY - dstX);
     }
 
+    public static float DiagonalDistance(Vector2 a, Vector2 b){
+        float dx = b.x - a.x;
+        float dy = b.y - a.y;
+        return Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+    }
 }
 
 public class GridManager : MonoBehaviour
@@ -41,6 +57,8 @@ public class GridManager : MonoBehaviour
     public float tileSize;
     public GridTile[,] tiles;
     public LayerMask unwalkableMask;
+    [SerializeField] GameObject tileOverlayPrefab;
+    [SerializeField] Transform tileOverlayParentTransform;
 
     void Start(){
         InitializeGrid();
@@ -53,11 +71,14 @@ public class GridManager : MonoBehaviour
             for (int y = 0; y < gridSize.y; y++)
             {
                 tiles[x, y] = new GridTile(new Vector2Int(x, y), tileSize);
+                tiles[x, y].overlayImage = Instantiate(tileOverlayPrefab, tiles[x, y].worldPosition, Quaternion.identity, tileOverlayParentTransform).GetComponentInChildren<Image>();
             }
         }
     }
 
-    public List<GridTile> GetAdjacentTiles(GridTile tile){
+    public static List<GridTile> GetAdjacentTiles(Vector2Int tileGridPos){
+        GridManager gridManager = GameManager.Instance.gridManager;
+        GridTile tile = gridManager.tiles[tileGridPos.x, tileGridPos.y];
         List<GridTile> adjacencies = new List<GridTile>();
         for (int x = -1; x <= 1; x++)
         {
@@ -69,12 +90,26 @@ public class GridManager : MonoBehaviour
                 int checkX = tile.gridPosition.x + x;
                 int checkY = tile.gridPosition.y + y;
 
-                if(checkX >= 0 && checkX < gridSize.x && checkY >= 0 && checkY < gridSize.y){
-                    adjacencies.Add(tiles[checkX, checkY]);
+                if(checkX >= 0 && checkX < gridManager.gridSize.x && checkY >= 0 && checkY < gridManager.gridSize.y){
+                    adjacencies.Add(gridManager.tiles[checkX, checkY]);
                 }
             }
         }
         return adjacencies;
+    }
+
+    public static void ShowTileOverlays(List<GridTile> tiles, Color color){
+        foreach (GridTile tile in tiles)
+        {
+            tile.ShowOverlay(color);
+        }
+    }
+
+    public static void HideTileOverlays(){
+        foreach (GridTile tile in GameManager.Instance.gridManager.tiles)
+        {
+            tile.HideOverlay();
+        }
     }
 
     public Stack<GridTile> path;

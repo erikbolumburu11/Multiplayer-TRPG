@@ -5,13 +5,21 @@ using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
+public enum Command {
+    NONE,
+    MOVE,
+    BASIC_ATTACK
+}
+
 public class PlayerInputManager : NetworkBehaviour
 {
+    public Command selectedCommand;
     GridManager gridManager;
-    [SerializeField] GameObject unitPrefab;
+    UnitManager unitManager;
 
-    void Awake(){
+    void Start(){
         gridManager = GameManager.Instance.gridManager;
+        unitManager = GameManager.Instance.unitManager;
     }
 
     public override void OnNetworkSpawn(){
@@ -22,13 +30,61 @@ public class PlayerInputManager : NetworkBehaviour
 
 
     void Update(){
-        if(!IsOwner) return;
-
-        if(GetHoveredTile() != null){
-            if(Input.GetKeyDown(KeyCode.M)){
-                if(TurnManager.IsMyTurn()) GameManager.Instance.unitManager.MoveSelectedUnitRpc(GetHoveredTile().gridPosition);
-            } 
+        if(Input.GetMouseButtonDown(0)){
+            switch(selectedCommand){
+                case Command.MOVE: Move(); break;
+                case Command.BASIC_ATTACK: BasicAttack(); break;
+            }
+            SetCommand(Command.NONE);
         }
+    }
+
+    public void SetCommand(Command newCommand){
+        if(unitManager.selectedUnit == null) return;
+        Vector2Int unitTilePos = unitManager.selectedUnit.GetComponent<UnitBehaviour>().occupyingTile.Value;
+        GridTile unitTile = gridManager.tiles[unitTilePos.x, unitTilePos.y];
+
+        switch(selectedCommand){
+            case Command.NONE: GridManager.HideTileOverlays(); break;
+            case Command.MOVE: GridManager.HideTileOverlays(); break;
+            case Command.BASIC_ATTACK: GridManager.HideTileOverlays(); break;
+        }
+
+        switch(newCommand){
+            case Command.NONE: break;
+
+            case Command.MOVE: 
+                GridManager.ShowTileOverlays(
+                    RangeFinder.GetWalkableTilesInRange(unitTile,
+                    5
+                ), Color.green); 
+                break;
+
+            case Command.BASIC_ATTACK:
+                List<GridTile> visibleTiles =
+                    Visibility.GetVisibleTilesFromList(unitTile,
+                        RangeFinder.GetWalkableTilesInRange(unitTile, 7)); 
+                GridManager.ShowTileOverlays(visibleTiles, Color.red);
+                break;
+        }
+
+        selectedCommand = newCommand;
+    }
+
+    private void Move()
+    {
+        if(GetHoveredTile() == null) return;
+        if(!TurnManager.IsMyTurn()) return;
+
+        Vector2Int unitTilePos = unitManager.selectedUnit.GetComponent<UnitBehaviour>().occupyingTile.Value;
+        if(!RangeFinder.GetWalkableTilesInRange(gridManager.tiles[unitTilePos.x, unitTilePos.y], 5).Contains(GetHoveredTile())) return;
+
+        GameManager.Instance.unitManager.MoveSelectedUnitRpc(GetHoveredTile().gridPosition);
+    }
+
+    private void BasicAttack()
+    {
+        throw new NotImplementedException();
     }
 
     [Rpc(SendTo.Everyone)]

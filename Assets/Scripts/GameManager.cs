@@ -18,6 +18,7 @@ public class GameManager : NetworkBehaviour
     public Pathfinder pathfinder;
     public GameStateManager gameStateManager;
     public TurnManager turnManager;
+    public PlayerInputManager playerInputManager;
     public PlayerManager playerManager;
     public PlayerPartyManager playerPartyManager;
     public UIElements UIElements;
