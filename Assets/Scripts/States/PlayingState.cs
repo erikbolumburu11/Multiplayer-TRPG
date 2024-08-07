@@ -14,5 +14,24 @@ public class PlayingState : GameState
     {
         if(GameManager.Instance.gameStateManager.state.Value != key) return;
         base.Update();
+
+        if(TurnManager.IsMyTurn()){
+            GameManager.Instance.UIElements.playingUIObject.SetActive(true);
+        }
+        else{
+            GameManager.Instance.UIElements.playingUIObject.SetActive(false);
+        }
+
+        if(!IsServer) return;
+
+        TurnManager turnManager = GameManager.Instance.turnManager;
+        PlayerInputManager playerInputManager = GameManager.Instance.playerInputManager;
+
+        if(turnManager.turn.hasAttacked &&
+           turnManager.turn.hasMoved &&
+           !playerInputManager.lockInput)
+        {
+            turnManager.NextTurnRpc();
+        }
     }
 }

@@ -14,6 +14,6 @@ public class UnitCard : MonoBehaviour
     }
 
     public void SelectCard(){
-        GameManager.Instance.playerPartyManager.selectedUnitCard = unitData;
+        if(TurnManager.IsMyTurn()) GameManager.Instance.playerPartyManager.selectedUnitCard = unitData;
     }
 }

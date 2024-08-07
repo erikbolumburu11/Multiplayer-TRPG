@@ -50,8 +50,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6619323692225350238, guid: 970060869ade4e648986256af021be75, type: 3}
       propertyPath: m_Name
-      value: Unit
+      value: Red
       objectReference: {fileID: 0}
+    - target: {fileID: 6867672105938076712, guid: 970060869ade4e648986256af021be75, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 4244410178
+      objectReference: {fileID: 0}
+    - target: {fileID: 7643477303310569540, guid: 970060869ade4e648986256af021be75, type: 3}
+      propertyPath: unitData
+      value: 
+      objectReference: {fileID: 11400000, guid: 9bff0583e774e004ca314d2d63d65462, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

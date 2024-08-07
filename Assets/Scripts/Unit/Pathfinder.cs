@@ -35,7 +35,10 @@ public class Pathfinder : MonoBehaviour
             }
 
             foreach(GridTile adjacency in GridManager.GetAdjacentTiles(currentTile.gridPosition)){
-                if(!adjacency.walkable || closedSet.Contains(adjacency)) continue;
+                if(!adjacency.walkable ||
+                    closedSet.Contains(adjacency) ||
+                    GridManager.GetTilesOccupyingObject(adjacency.gridPosition) != null
+                ) continue;
 
                 int newMovementCostToAdjacency = currentTile.gCost + GridTile.Distance(currentTile, adjacency);
                 if(newMovementCostToAdjacency < adjacency.gCost || !openSet.Contains(adjacency)){

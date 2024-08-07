@@ -3,15 +3,28 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
+public struct Turn : INetworkSerializable {
+    public bool hasMoved;
+    public bool hasAttacked;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref hasMoved);
+        serializer.SerializeValue(ref hasAttacked);
+    }
+}
+
 public class TurnManager : NetworkBehaviour
 {
     public NetworkVariable<ulong> currentPlayerClientId = new();
     public NetworkVariable<int> currentTurn = new();
+    public Turn turn;
 
     void Awake(){
         currentPlayerClientId.Value = 0;
         currentTurn.Value = 1;
         if(!IsServer) return;
+        turn = new Turn();
     }
 
     void Update(){
@@ -24,11 +37,17 @@ public class TurnManager : NetworkBehaviour
         currentTurn.Value++;
         int connectedPlayerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
         if((int)currentPlayerClientId.Value >= connectedPlayerCount) currentPlayerClientId.Value = 0;
+        SetTurnRpc(new Turn());
     }
 
     [Rpc(SendTo.Everyone)]
     public void SetSelectedUnitRpc(RpcParams rpcParams = default){
         SetSelectedUnit();
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void SetTurnRpc(Turn turn, RpcParams rpcParams = default){
+        this.turn = turn;
     }
 
     public void SetSelectedUnit(){

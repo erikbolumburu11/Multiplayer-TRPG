@@ -28,15 +28,18 @@ public class PlayerPartyManager : NetworkBehaviour
             }
         }
 
-        if(Input.GetMouseButtonDown(0) && 
-            selectedUnitCard != null && 
-            PlayerInputManager.GetHoveredTile() != null &&
-            PlayerInputManager.GetHoveredTile().walkable
-        ){
-            GameManager.Instance.unitManager.SpawnUnitRpc(selectedUnitCard.prefabResourceDir, PlayerInputManager.GetHoveredTile().gridPosition);
-            unitHand.Remove(selectedUnitCard);
-            GameManager.Instance.UIElements.unitCards.GetComponent<UnitCardList>().RemoveCard(selectedUnitCard);
-            selectedUnitCard = null;
+        if(Input.GetMouseButtonDown(0)){
+            if(selectedUnitCard != null && 
+                PlayerInputManager.GetHoveredTile() != null &&
+                PlayerInputManager.GetHoveredTile().walkable &&
+                GridManager.GetTilesOccupyingObject(PlayerInputManager.GetHoveredTile().gridPosition) == null)
+            {
+                GameObject go = GridManager.GetTilesOccupyingObject(PlayerInputManager.GetHoveredTile().gridPosition);
+                GameManager.Instance.unitManager.SpawnUnitRpc(selectedUnitCard.prefabResourceDir, PlayerInputManager.GetHoveredTile().gridPosition);
+                unitHand.Remove(selectedUnitCard);
+                GameManager.Instance.UIElements.unitCards.GetComponent<UnitCardList>().RemoveCard(selectedUnitCard);
+                selectedUnitCard = null;
+            }
         }
     }
 

@@ -6,6 +6,9 @@ using UnityEngine;
 public class UnitData : ScriptableObject
 {
     public string unitName;
+    public int maxHealth;
+    public int moveRange;
+    public int basicAttackRange;
     public float speed;
     public string prefabResourceDir;
 }

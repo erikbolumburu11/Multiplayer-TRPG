@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -110,6 +111,19 @@ public class GridManager : MonoBehaviour
         {
             tile.HideOverlay();
         }
+    }
+
+    public static GameObject GetTilesOccupyingObject(Vector2Int gridPos){
+        UnitManager unitManager = GameManager.Instance.unitManager;
+        foreach (ulong key in unitManager.playerUnitMap.Keys)
+        {
+            foreach (GameObject obj in unitManager.playerUnitMap[key])
+            {
+                Vector2Int objGridPos = obj.GetComponent<UnitBehaviour>().occupyingTile.Value;
+                if(gridPos == objGridPos) return obj;
+            }
+        }
+        return null;
     }
 
     public Stack<GridTile> path;

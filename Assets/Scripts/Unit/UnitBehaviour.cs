@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -10,27 +11,70 @@ public class UnitBehaviour : NetworkBehaviour
     public Stack<GridTile> path;
     GridTile tileMovingTo;
     public UnitData unitData;
+    public UnitStats unitStats;
     public NetworkVariable<ulong> ownerClientId;
-    Image playerIndicator;
+    public NetworkVariable<bool> isAttacking;
+    [SerializeField] Image teamIndicator;
+    [SerializeField] Image healthBarFill;
     public GameObject selectionDecal;
+    Animator animator;
+    public ClientAuthNetworkAnimator clientAuthNetworkAnimator;
 
     void Start(){
-        SetPlayerIndicatorColor(); 
+        unitStats = GetComponent<UnitStats>();
+        unitStats.health.Value = unitData.maxHealth;
+        animator = GetComponent<Animator>();
+        clientAuthNetworkAnimator = GetComponent<ClientAuthNetworkAnimator>();
         if(!IsServer) return;
     }
 
     void SetPlayerIndicatorColor(){
-        playerIndicator = GetComponentInChildren<Image>();
-        if(NetworkManager.Singleton.LocalClientId == ownerClientId.Value) playerIndicator.color = Color.green;
-        else playerIndicator.color = Color.red;
+        if(NetworkManager.Singleton.LocalClientId == ownerClientId.Value){
+            teamIndicator.color = Color.green;
+            healthBarFill.color = Color.green;
+        }
+        else {
+            teamIndicator.color = Color.red;
+            healthBarFill.color = Color.red;
+        }
     }
 
-    void Update(){
-        if(GameStateManager.CompareCurrentState(GameStateKey.PLAYING)) SetSelectionDecalVisibility();
+    void Update()
+    {
+        if (GameStateManager.CompareCurrentState(GameStateKey.PLAYING)) SetSelectionDecalVisibility();
+        SetPlayerIndicatorColor(); 
 
-        if(!IsServer) return;
+        LockInput();
+
+        if (!IsServer) return;
+
+        if (unitStats.health.Value <= 0) UnitDeathRpc();
         Move();
         HasReachedNextTile();
+        SetAnimatorParameters();
+    }
+
+    private void LockInput()
+    {
+        if (ownerClientId.Value == NetworkManager.Singleton.LocalClientId)
+        {
+            // Is Unit Moving
+            if ((path != null && path.Count > 0) || tileMovingTo != null || isAttacking.Value) GameManager.Instance.playerInputManager.lockInput = true;
+            else GameManager.Instance.playerInputManager.lockInput = false;
+
+        }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    public void UnitDeathRpc(){
+        GameManager.Instance.unitManager.playerUnitMap[ownerClientId.Value].Remove(gameObject);
+        if(!IsServer) return;
+        GetComponent<NetworkObject>().Despawn();
+    }
+
+    private void SetAnimatorParameters()
+    {
+        animator.SetBool("IsMoving", path != null && path.Count != 0);
     }
 
     void SetSelectionDecalVisibility(){
@@ -45,17 +89,19 @@ public class UnitBehaviour : NetworkBehaviour
             }
         }
 
-        if(tileMovingTo != null)
+        if(tileMovingTo != null){
             transform.position = Vector3.MoveTowards(transform.position,
-                UnitManager.GridWorldPosToGameObjectPos(tileMovingTo.worldPosition, gameObject),
+                tileMovingTo.worldPosition,
                 unitData.speed * Time.deltaTime
             );
+            transform.LookAt(tileMovingTo.worldPosition, Vector3.up);
+        }
     }
 
     void HasReachedNextTile(){
         if(tileMovingTo == null) return;
 
-        if(Vector3.Distance(transform.position, UnitManager.GridWorldPosToGameObjectPos(tileMovingTo.worldPosition, gameObject)) < 0.05f){
+        if(Vector3.Distance(transform.position, tileMovingTo.worldPosition) < 0.05f){
             occupyingTile.Value = tileMovingTo.gridPosition;
             if(path.Count > 0) tileMovingTo = path.Pop();
             else tileMovingTo = null;
