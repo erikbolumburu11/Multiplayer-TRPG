@@ -1,1 +1,1 @@
-[Video Showcase](https://www.youtube.com/watch?v=LEXh0jT_nBQ)
+[Video Showcase](https://youtu.be/Bf6fRRcak-U)
