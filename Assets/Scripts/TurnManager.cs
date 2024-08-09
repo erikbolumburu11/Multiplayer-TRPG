@@ -19,30 +19,38 @@ public class TurnManager : NetworkBehaviour
     public NetworkVariable<ulong> currentPlayerClientId = new();
     public NetworkVariable<int> currentTurn = new();
     public Turn turn;
+    Dictionary<ulong, int> playersCurrentUnitMap;
 
     void Awake(){
+        playersCurrentUnitMap = new();
         currentPlayerClientId.Value = 0;
         currentTurn.Value = 1;
         if(!IsServer) return;
         turn = new Turn();
     }
 
-    void Update(){
-        SetSelectedUnitRpc();
+    public override void OnNetworkSpawn(){
+        currentTurn.OnValueChanged += SetSelectedUnit;
     }
+
+    public override void OnNetworkDespawn(){
+        currentTurn.OnValueChanged -= SetSelectedUnit;
+    }
+
 
     [Rpc(SendTo.Server)]
     public void NextTurnRpc(){
-        currentPlayerClientId.Value++;
-        currentTurn.Value++;
         int connectedPlayerCount = NetworkManager.Singleton.ConnectedClientsList.Count;
-        if((int)currentPlayerClientId.Value >= connectedPlayerCount) currentPlayerClientId.Value = 0;
+        if((int)currentPlayerClientId.Value + 1 != connectedPlayerCount) currentPlayerClientId.Value++;
+        else currentPlayerClientId.Value = 0;
+
+        currentTurn.Value++;
+
         SetTurnRpc(new Turn());
     }
 
     [Rpc(SendTo.Everyone)]
     public void SetSelectedUnitRpc(RpcParams rpcParams = default){
-        SetSelectedUnit();
     }
 
     [Rpc(SendTo.Everyone)]
@@ -50,14 +58,19 @@ public class TurnManager : NetworkBehaviour
         this.turn = turn;
     }
 
-    public void SetSelectedUnit(){
+    public void SetSelectedUnit(int previous, int current){
         UnitManager unitManager = GameManager.Instance.unitManager;
         ulong currentPlayerClientId = GameManager.Instance.turnManager.currentPlayerClientId.Value;
         int currentTurn = GameManager.Instance.turnManager.currentTurn.Value;
 
-        if(unitManager.playerUnitMap[currentPlayerClientId].Count != 0) 
-            unitManager.selectedUnit = unitManager.playerUnitMap[currentPlayerClientId]
-                [currentTurn % unitManager.playerUnitMap[currentPlayerClientId].Count];
+        if(!playersCurrentUnitMap.ContainsKey(currentPlayerClientId)){
+            playersCurrentUnitMap.Add(currentPlayerClientId, -1);
+        }
+
+        playersCurrentUnitMap[currentPlayerClientId]++;
+        if(playersCurrentUnitMap[currentPlayerClientId] == unitManager.playerUnitMap[currentPlayerClientId].Count) playersCurrentUnitMap[currentPlayerClientId] = 0;
+        unitManager.selectedUnit = unitManager.playerUnitMap[currentPlayerClientId][playersCurrentUnitMap[currentPlayerClientId]];
+
     }
 
     public static bool IsMyTurn(){

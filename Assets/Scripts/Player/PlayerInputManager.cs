@@ -128,8 +128,10 @@ public class PlayerInputManager : NetworkBehaviour
     public void InitializePlayerRpc(RpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
-        GameManager.Instance.unitManager.playerUnitMap.Add(clientId, new());
-        GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId));
+        if(!GameManager.Instance.unitManager.playerUnitMap.ContainsKey(clientId)){
+            GameManager.Instance.unitManager.playerUnitMap.Add(clientId, new());
+            GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId));
+        }
     }
 
     public static GridTile GetHoveredTile(){

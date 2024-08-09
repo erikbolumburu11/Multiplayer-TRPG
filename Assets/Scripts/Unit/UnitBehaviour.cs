@@ -22,10 +22,10 @@ public class UnitBehaviour : NetworkBehaviour
 
     void Start(){
         unitStats = GetComponent<UnitStats>();
-        unitStats.health.Value = unitData.maxHealth;
         animator = GetComponent<Animator>();
         clientAuthNetworkAnimator = GetComponent<ClientAuthNetworkAnimator>();
         if(!IsServer) return;
+        unitStats.health.Value = unitData.maxHealth;
     }
 
     void SetPlayerIndicatorColor(){

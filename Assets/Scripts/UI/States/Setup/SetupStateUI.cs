@@ -22,5 +22,11 @@ public class SetupStateUI : GameStateUI
     public override void Update()
     {
         base.Update();
+        if(TurnManager.IsMyTurn()){
+            GameManager.Instance.UIElements.unitCards.SetActive(true);
+        }
+        else {
+            GameManager.Instance.UIElements.unitCards.SetActive(false);
+        }
     }
 }
