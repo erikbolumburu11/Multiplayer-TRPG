@@ -33,24 +33,28 @@ public class PlayerInputManager : NetworkBehaviour
 
 
     void Update(){
-        if(lockInput){
-            SetCommand(Command.NONE);
-            return;
-        }
 
-        if(Input.GetMouseButtonDown(0)){
-            switch(selectedCommand){
-                case Command.MOVE: Move(); break;
-                case Command.BASIC_ATTACK: BasicAttack(); break;
-                case Command.CAST_ABILITY: CastAbility(); break;
+        if(GameStateManager.CompareCurrentState(GameStateKey.PLAYING)){
+
+            if(lockInput){
+                SetCommand(Command.NONE);
+                return;
             }
-            SetCommand(Command.NONE);
+
+            if(Input.GetMouseButtonDown(0)){
+                switch(selectedCommand){
+                    case Command.MOVE: Move(); break;
+                    case Command.BASIC_ATTACK: BasicAttack(); break;
+                    case Command.CAST_ABILITY: CastAbility(); break;
+                }
+                SetCommand(Command.NONE);
+            }
         }
     }
 
     public void SetCommand(Command newCommand){
         if(unitManager.selectedUnit == null) return;
-        Vector2Int unitTilePos = unitManager.selectedUnit.GetComponent<UnitBehaviour>().occupyingTile.Value;
+        Vector2Int unitTilePos = UnitManager.GetSelectedUnitBehaviour().occupyingTile.Value;
         GridTile unitTile = gridManager.tiles[unitTilePos.x, unitTilePos.y];
 
         TileOverlayLayer rangeLayer = gridManager.tileOverlayLayersMap[TileOverlayLayerID.RANGE_INDICATOR];

@@ -79,7 +79,7 @@ public class UnitBehaviour : NetworkBehaviour
     }
 
     void SetSelectionDecalVisibility(){
-        if(GameManager.Instance.unitManager.selectedUnit == gameObject) selectionDecal.SetActive(true);
+        if(UnitManager.GetSelectedUnit() == gameObject) selectionDecal.SetActive(true);
         else selectionDecal.SetActive(false);
     }
 

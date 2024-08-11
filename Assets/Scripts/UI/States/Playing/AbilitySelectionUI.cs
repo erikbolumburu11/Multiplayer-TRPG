@@ -50,7 +50,7 @@ public class AbilitySelectionUI : MonoBehaviour
         }
         abilityUIItems.Clear();
 
-        foreach (Ability ability in GameManager.Instance.unitManager.selectedUnit.GetComponent<UnitBehaviour>().unitData.abilities)
+        foreach (Ability ability in UnitManager.GetSelectedUnitBehaviour().unitData.abilities)
         {
             GameObject abilityUIItem = Instantiate(abilityUIPrefab, abilityListParent);
             abilityUIItem.GetComponentInChildren<TMP_Text>().text = ability.name;

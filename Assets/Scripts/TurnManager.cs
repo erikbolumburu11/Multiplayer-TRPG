@@ -29,14 +29,6 @@ public class TurnManager : NetworkBehaviour
         turn = new Turn();
     }
 
-    public override void OnNetworkSpawn(){
-        currentTurn.OnValueChanged += SetSelectedUnit;
-    }
-
-    public override void OnNetworkDespawn(){
-        currentTurn.OnValueChanged -= SetSelectedUnit;
-    }
-
 
     [Rpc(SendTo.Server)]
     public void NextTurnRpc(){
@@ -47,6 +39,7 @@ public class TurnManager : NetworkBehaviour
         currentTurn.Value++;
 
         SetTurnRpc(new Turn());
+        SetSelectedUnit();
     }
 
     [Rpc(SendTo.Everyone)]
@@ -58,15 +51,15 @@ public class TurnManager : NetworkBehaviour
         this.turn = turn;
     }
 
-    public void SetSelectedUnit(int previous, int current){
+    public void SetSelectedUnit(){
         if(!GameStateManager.CompareCurrentState(GameStateKey.PLAYING)) return;
 
         UnitManager unitManager = GameManager.Instance.unitManager;
         ulong currentPlayerClientId = GameManager.Instance.turnManager.currentPlayerClientId.Value;
         int currentTurn = GameManager.Instance.turnManager.currentTurn.Value;
 
-        if(playersCurrentUnitMap[currentPlayerClientId] == unitManager.playerUnitMap[currentPlayerClientId].Count) playersCurrentUnitMap[currentPlayerClientId] = 0;
-        unitManager.selectedUnit = unitManager.playerUnitMap[currentPlayerClientId][playersCurrentUnitMap[currentPlayerClientId]];
+        if(playersCurrentUnitMap[currentPlayerClientId] >= unitManager.playerUnitMap[currentPlayerClientId].Count) playersCurrentUnitMap[currentPlayerClientId] = 0;
+        unitManager.selectedUnit.Value = unitManager.playerUnitMap[currentPlayerClientId][playersCurrentUnitMap[currentPlayerClientId]];
 
         playersCurrentUnitMap[currentPlayerClientId]++;
     }
@@ -76,9 +69,5 @@ public class TurnManager : NetworkBehaviour
             return true;
         else
             return false;
-    }
-
-    public static UnitBehaviour GetCurrentTurnsUnit(){
-        return GameManager.Instance.unitManager.selectedUnit.GetComponent<UnitBehaviour>();
     }
 }

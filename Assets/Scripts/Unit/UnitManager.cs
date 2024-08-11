@@ -8,7 +8,7 @@ using UnityEngine;
 public class UnitManager : NetworkBehaviour
 {
     public Dictionary<ulong, List<GameObject>> playerUnitMap;
-    public GameObject selectedUnit;
+    public NetworkVariable<NetworkObjectReference> selectedUnit;
 
     void Awake(){
         playerUnitMap = new();
@@ -41,14 +41,13 @@ public class UnitManager : NetworkBehaviour
 
     [Rpc(SendTo.Server)]
     public void MoveSelectedUnitRpc(Vector2Int targetTilePos, RpcParams rpcParams = default) {
-        UnitBehaviour unitBehaviour = TurnManager.GetCurrentTurnsUnit().GetComponent<UnitBehaviour>();
         GridManager gridManager = GameManager.Instance.gridManager;
 
-        Vector2Int startTilePos = unitBehaviour.occupyingTile.Value;
+        Vector2Int startTilePos = GetSelectedUnitBehaviour().occupyingTile.Value;
         GridTile startTile = gridManager.tiles[startTilePos.x, startTilePos.y];
 
         Stack<GridTile> path = GameManager.Instance.pathfinder.FindPath(startTile, GameManager.Instance.gridManager.tiles[targetTilePos.x, targetTilePos.y]);
-        unitBehaviour.path = path;
+        GetSelectedUnitBehaviour().path = path;
         Turn turn = GameManager.Instance.turnManager.turn;
         if(path != null) GameManager.Instance.turnManager.SetTurnRpc(new Turn(){
             hasMoved = true,
@@ -65,15 +64,14 @@ public class UnitManager : NetworkBehaviour
         GameObject objOnTile = GridManager.GetTilesOccupyingObject(targetTilePos);
 
         if(objOnTile.TryGetComponent(out UnitBehaviour unitBehaviour)){
-            GameObject selectedUnit = GameManager.Instance.unitManager.selectedUnit;
 
             // Check if friendly fire
-            if(selectedUnit.GetComponent<UnitBehaviour>().ownerClientId.Value == unitBehaviour.ownerClientId.Value) return;
+            if(GetSelectedUnit().GetComponent<UnitBehaviour>().ownerClientId.Value == unitBehaviour.ownerClientId.Value) return;
 
             unitBehaviour.isPerformingAction.Value = true;
 
-            selectedUnit.GetComponent<ClientAuthNetworkAnimator>().SetTrigger("BasicAttack");
-            selectedUnit.transform.LookAt(objOnTile.transform);
+            GetSelectedUnit().GetComponent<ClientAuthNetworkAnimator>().SetTrigger("BasicAttack");
+            GetSelectedUnit().transform.LookAt(objOnTile.transform);
             unitBehaviour.unitStats.health.Value -= 100; // Damage
 
             Turn turn = GameManager.Instance.turnManager.turn;
@@ -109,8 +107,8 @@ public class UnitManager : NetworkBehaviour
 
         GetSelectedUnitBehaviour().isPerformingAction.Value = true;
 
-        selectedUnit.GetComponent<ClientAuthNetworkAnimator>().SetTrigger("AbilityRaise");
-        selectedUnit.transform.LookAt(GridManager.GetTileAtVector2Int(targetTilePos).worldPosition);
+        GetSelectedUnit().GetComponent<ClientAuthNetworkAnimator>().SetTrigger("AbilityRaise");
+        GetSelectedUnit().transform.LookAt(GridManager.GetTileAtVector2Int(targetTilePos).worldPosition);
 
         ActionOnTimer.GetTimer(gameObject, "CastingAbility_Timer").SetTimer(1, () => {
             foreach (GridTile tile in affectedTiles)
@@ -128,7 +126,8 @@ public class UnitManager : NetworkBehaviour
 
             }
 
-            Instantiate(ability.particlePrefab, GridManager.GetTileAtVector2Int(targetTilePos).worldPosition, Quaternion.identity);
+            GameObject particleEffect = Instantiate(ability.particlePrefab, GridManager.GetTileAtVector2Int(targetTilePos).worldPosition, Quaternion.identity);
+            particleEffect.GetComponent<NetworkObject>().Spawn();
 
             Turn turn = GameManager.Instance.turnManager.turn;
             GameManager.Instance.turnManager.SetTurnRpc(new Turn(){
@@ -141,11 +140,11 @@ public class UnitManager : NetworkBehaviour
     }
 
     public static GameObject GetSelectedUnit(){
-        return GameManager.Instance.unitManager.selectedUnit;
+        return GameManager.Instance.unitManager.selectedUnit.Value;
     }
 
     public static UnitBehaviour GetSelectedUnitBehaviour(){
-        return GameManager.Instance.unitManager.selectedUnit.GetComponent<UnitBehaviour>();
+        return GetSelectedUnit().GetComponent<UnitBehaviour>();
     }
 
 }
