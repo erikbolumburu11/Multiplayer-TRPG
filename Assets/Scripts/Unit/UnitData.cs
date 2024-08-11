@@ -11,4 +11,5 @@ public class UnitData : ScriptableObject
     public int basicAttackRange;
     public float speed;
     public string prefabResourceDir;
+    public List<Ability> abilities;
 }

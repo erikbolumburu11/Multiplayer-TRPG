@@ -1,9 +1,47 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+
+public enum TileOverlayLayerID {
+    RANGE_INDICATOR,
+    AFFECTED_TILES
+}
+
+public class TileOverlayLayer {
+    public TileOverlayLayerID id;
+    public List<GridTile> highlightedTiles;
+    public Color color;
+
+    public TileOverlayLayer(TileOverlayLayerID id){
+        this.id = id;
+        Color color = Color.white;
+        highlightedTiles = new();
+    }
+
+    public void ShowTileOverlays(){
+        foreach (GridTile tile in highlightedTiles)
+        {
+            tile.ShowOverlay(color);
+        }
+    }
+
+    public void HideTileOverlays(){
+        foreach (GridTile tile in highlightedTiles)
+        {
+            tile.HideOverlay();
+            foreach (TileOverlayLayer layer in GameManager.Instance.gridManager.tileOverlayLayersMap.Values)
+            {
+                if(layer == this) continue;
+                if(layer.highlightedTiles.Contains(tile)) tile.ShowOverlay(layer.color);
+            }
+        }
+        highlightedTiles.Clear();
+    }
+}
 
 public class GridTile {
     public Vector2Int gridPosition;
@@ -60,6 +98,15 @@ public class GridManager : MonoBehaviour
     public LayerMask unwalkableMask;
     [SerializeField] GameObject tileOverlayPrefab;
     [SerializeField] Transform tileOverlayParentTransform;
+    public Dictionary<TileOverlayLayerID, TileOverlayLayer> tileOverlayLayersMap;
+
+    void Awake(){
+        tileOverlayLayersMap = new()
+        {
+            { TileOverlayLayerID.RANGE_INDICATOR, new(TileOverlayLayerID.RANGE_INDICATOR) },
+            { TileOverlayLayerID.AFFECTED_TILES, new(TileOverlayLayerID.AFFECTED_TILES) }
+        };
+    }
 
     void Start(){
         InitializeGrid();
@@ -99,20 +146,6 @@ public class GridManager : MonoBehaviour
         return adjacencies;
     }
 
-    public static void ShowTileOverlays(List<GridTile> tiles, Color color){
-        foreach (GridTile tile in tiles)
-        {
-            tile.ShowOverlay(color);
-        }
-    }
-
-    public static void HideTileOverlays(){
-        foreach (GridTile tile in GameManager.Instance.gridManager.tiles)
-        {
-            tile.HideOverlay();
-        }
-    }
-
     public static GameObject GetTilesOccupyingObject(Vector2Int gridPos){
         UnitManager unitManager = GameManager.Instance.unitManager;
         foreach (ulong key in unitManager.playerUnitMap.Keys)
@@ -124,6 +157,17 @@ public class GridManager : MonoBehaviour
             }
         }
         return null;
+    }
+
+    public static void HideAllTileOverlays(){
+        foreach (TileOverlayLayer layer in GameManager.Instance.gridManager.tileOverlayLayersMap.Values)
+        {
+            layer.HideTileOverlays();
+        }
+    }
+
+    public static GridTile GetTileAtVector2Int(Vector2Int pos){
+        return GameManager.Instance.gridManager.tiles[pos.x, pos.y];
     }
 
     public Stack<GridTile> path;

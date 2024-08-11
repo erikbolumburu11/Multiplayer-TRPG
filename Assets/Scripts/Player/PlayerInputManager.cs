@@ -8,7 +8,8 @@ using UnityEngine;
 public enum Command {
     NONE,
     MOVE,
-    BASIC_ATTACK
+    BASIC_ATTACK,
+    CAST_ABILITY
 }
 
 public class PlayerInputManager : NetworkBehaviour
@@ -41,6 +42,7 @@ public class PlayerInputManager : NetworkBehaviour
             switch(selectedCommand){
                 case Command.MOVE: Move(); break;
                 case Command.BASIC_ATTACK: BasicAttack(); break;
+                case Command.CAST_ABILITY: CastAbility(); break;
             }
             SetCommand(Command.NONE);
         }
@@ -51,24 +53,22 @@ public class PlayerInputManager : NetworkBehaviour
         Vector2Int unitTilePos = unitManager.selectedUnit.GetComponent<UnitBehaviour>().occupyingTile.Value;
         GridTile unitTile = gridManager.tiles[unitTilePos.x, unitTilePos.y];
 
-        switch(selectedCommand){
-            case Command.NONE: GridManager.HideTileOverlays(); break;
-            case Command.MOVE: GridManager.HideTileOverlays(); break;
-            case Command.BASIC_ATTACK: GridManager.HideTileOverlays(); break;
-        }
+        TileOverlayLayer rangeLayer = gridManager.tileOverlayLayersMap[TileOverlayLayerID.RANGE_INDICATOR];
+        TileOverlayLayer affectedTilesLayer = gridManager.tileOverlayLayersMap[TileOverlayLayerID.AFFECTED_TILES];
+
+        GridManager.HideAllTileOverlays();
 
         switch(newCommand){
             case Command.NONE: break;
 
             case Command.MOVE: 
-                GridManager.ShowTileOverlays(
-                    RangeFinder.GetWalkableTilesInRange(
-                        unitTile,
-                        unitManager.selectedUnit.GetComponent<UnitBehaviour>().unitData.moveRange,
-                        false
-                    ), 
-                    Color.green
-                ); 
+                rangeLayer.color = Color.green;
+                rangeLayer.highlightedTiles = RangeFinder.GetWalkableTilesInRange(
+                    unitTile,
+                    UnitManager.GetSelectedUnitBehaviour().unitData.moveRange,
+                    false
+                );
+                rangeLayer.ShowTileOverlays(); 
                 break;
 
             case Command.BASIC_ATTACK:
@@ -76,11 +76,13 @@ public class PlayerInputManager : NetworkBehaviour
                     unitTile,
                     RangeFinder.GetAttackableTilesInRange(
                         unitTile,
-                        unitManager.selectedUnit.GetComponent<UnitBehaviour>().unitData.basicAttackRange,
+                        UnitManager.GetSelectedUnitBehaviour().unitData.basicAttackRange,
                         false
                     )
                 ); 
-                GridManager.ShowTileOverlays(attackableTiles, Color.red);
+                rangeLayer.color = Color.red;
+                rangeLayer.highlightedTiles = attackableTiles;
+                rangeLayer.ShowTileOverlays();
                 break;
         }
 
@@ -92,14 +94,14 @@ public class PlayerInputManager : NetworkBehaviour
         if(GetHoveredTile() == null) return;
         if(!TurnManager.IsMyTurn()) return;
 
-        Vector2Int unitTilePos = unitManager.selectedUnit.GetComponent<UnitBehaviour>().occupyingTile.Value;
+        Vector2Int unitTilePos = UnitManager.GetSelectedUnitBehaviour().occupyingTile.Value;
         GridTile unitTile = gridManager.tiles[unitTilePos.x, unitTilePos.y];
 
         if(!RangeFinder.GetWalkableTilesInRange(
-                unitTile,
-                unitManager.selectedUnit.GetComponent<UnitBehaviour>().unitData.moveRange,
-                false
-            ).Contains(GetHoveredTile())) return;
+            unitTile,
+            UnitManager.GetSelectedUnitBehaviour().unitData.moveRange,
+            false
+        ).Contains(GetHoveredTile())) return;
 
         GameManager.Instance.unitManager.MoveSelectedUnitRpc(GetHoveredTile().gridPosition);
     }
@@ -109,19 +111,45 @@ public class PlayerInputManager : NetworkBehaviour
         if(GetHoveredTile() == null) return;
         if(!TurnManager.IsMyTurn()) return;
 
-        Vector2Int unitTilePos = unitManager.selectedUnit.GetComponent<UnitBehaviour>().occupyingTile.Value;
+        Vector2Int unitTilePos = UnitManager.GetSelectedUnitBehaviour().occupyingTile.Value;
         GridTile unitTile = gridManager.tiles[unitTilePos.x, unitTilePos.y];
         List<GridTile> attackableTiles = Visibility.GetVisibleTilesFromList(
             unitTile,
             RangeFinder.GetAttackableTilesInRange(
                 unitTile,
-                unitManager.selectedUnit.GetComponent<UnitBehaviour>().unitData.basicAttackRange,
+                UnitManager.GetSelectedUnitBehaviour().unitData.basicAttackRange,
                 false
             )
         ); 
         if(!attackableTiles.Contains(GetHoveredTile())) return;
 
         GameManager.Instance.unitManager.BasicAttackRpc(GetHoveredTile().gridPosition);
+    }
+
+    private void CastAbility(){
+        if(GetHoveredTile() == null) return;
+        if(!TurnManager.IsMyTurn()) return;
+
+        UnitBehaviour unitBehaviour = UnitManager.GetSelectedUnitBehaviour();
+
+        if(unitBehaviour.selectedAbility == null) return;
+
+        List<GridTile> targetableTiles = Visibility.GetVisibleTilesFromList(
+            GridManager.GetTileAtVector2Int(unitBehaviour.occupyingTile.Value),
+            RangeFinder.GetAttackableTilesInRange(
+                GridManager.GetTileAtVector2Int(unitBehaviour.occupyingTile.Value),
+                unitBehaviour.selectedAbility.castRange,
+                unitBehaviour.selectedAbility.canTargetCaster
+            )
+        ); 
+
+        if(!targetableTiles.Contains(GetHoveredTile())) return;
+
+        GridManager.HideAllTileOverlays();
+        GameManager.Instance.unitManager.CastAbilityRpc(GetHoveredTile().gridPosition, unitBehaviour.selectedAbility.path);
+        UnitManager.GetSelectedUnitBehaviour().selectedAbility = null;
+
+        GameManager.Instance.UIElements.abilityMenuUIObject.GetComponent<AbilitySelectionUI>().BackToCommandSelection();
     }
 
     [Rpc(SendTo.Everyone)]
@@ -131,6 +159,7 @@ public class PlayerInputManager : NetworkBehaviour
         if(!GameManager.Instance.unitManager.playerUnitMap.ContainsKey(clientId)){
             GameManager.Instance.unitManager.playerUnitMap.Add(clientId, new());
             GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId));
+            GameManager.Instance.turnManager.playersCurrentUnitMap.Add(clientId, 0);
         }
     }
 

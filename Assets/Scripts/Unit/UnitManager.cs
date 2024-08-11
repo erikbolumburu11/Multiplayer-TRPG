@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -51,7 +52,7 @@ public class UnitManager : NetworkBehaviour
         Turn turn = GameManager.Instance.turnManager.turn;
         if(path != null) GameManager.Instance.turnManager.SetTurnRpc(new Turn(){
             hasMoved = true,
-            hasAttacked = turn.hasAttacked
+            hasPerformedAction = turn.hasPerformedAction
         });
     }
 
@@ -59,7 +60,7 @@ public class UnitManager : NetworkBehaviour
     public void BasicAttackRpc(Vector2Int targetTilePos, RpcParams rpcParams = default)
     {
         if(GridManager.GetTilesOccupyingObject(targetTilePos) == null) return;
-        if(GameManager.Instance.turnManager.turn.hasAttacked) return;
+        if(GameManager.Instance.turnManager.turn.hasPerformedAction) return;
 
         GameObject objOnTile = GridManager.GetTilesOccupyingObject(targetTilePos);
 
@@ -69,7 +70,7 @@ public class UnitManager : NetworkBehaviour
             // Check if friendly fire
             if(selectedUnit.GetComponent<UnitBehaviour>().ownerClientId.Value == unitBehaviour.ownerClientId.Value) return;
 
-            unitBehaviour.isAttacking.Value = true;
+            unitBehaviour.isPerformingAction.Value = true;
 
             selectedUnit.GetComponent<ClientAuthNetworkAnimator>().SetTrigger("BasicAttack");
             selectedUnit.transform.LookAt(objOnTile.transform);
@@ -78,14 +79,73 @@ public class UnitManager : NetworkBehaviour
             Turn turn = GameManager.Instance.turnManager.turn;
             GameManager.Instance.turnManager.SetTurnRpc(new Turn(){
                 hasMoved = turn.hasMoved,
-                hasAttacked = true
+                hasPerformedAction = true
             });
 
             ActionOnTimer.GetTimer(gameObject, "BasicAttack_Timer").SetTimer(1, () => {
-                unitBehaviour.isAttacking.Value = false;
+                unitBehaviour.isPerformingAction.Value = false;
             });
             
         }
+    }
+
+    [Rpc(SendTo.Server)]
+    public void CastAbilityRpc(Vector2Int targetTilePos, string abilityPath, RpcParams rpcParams = default){
+        Ability ability = Resources.Load(abilityPath, typeof(Ability)) as Ability;
+
+        if(ability.requiresTargetUnit && GridManager.GetTilesOccupyingObject(targetTilePos) == null) return;
+        if((!ability.canTargetCaster || !ability.canTargetCasterTile) && GridManager.GetTilesOccupyingObject(targetTilePos) == GetSelectedUnit()) return;
+
+        if(GameManager.Instance.turnManager.turn.hasPerformedAction) return;
+
+        List<GridTile> affectedTiles = Visibility.GetVisibleTilesFromList(
+            GridManager.GetTileAtVector2Int(targetTilePos),
+            RangeFinder.GetTilesInRangeFromTile(
+                GridManager.GetTileAtVector2Int(targetTilePos),
+                ability.effectRange,
+                true
+            )
+        );
+
+        GetSelectedUnitBehaviour().isPerformingAction.Value = true;
+
+        selectedUnit.GetComponent<ClientAuthNetworkAnimator>().SetTrigger("AbilityRaise");
+        selectedUnit.transform.LookAt(GridManager.GetTileAtVector2Int(targetTilePos).worldPosition);
+
+        ActionOnTimer.GetTimer(gameObject, "CastingAbility_Timer").SetTimer(1, () => {
+            foreach (GridTile tile in affectedTiles)
+            {
+                GameObject objOnTile = GridManager.GetTilesOccupyingObject(tile.gridPosition);
+                if(objOnTile == null) continue;
+
+                if(objOnTile.TryGetComponent(out UnitBehaviour unitBehaviour)){
+                    bool targettingAlly = GetSelectedUnitBehaviour().ownerClientId.Value == unitBehaviour.ownerClientId.Value;
+                    if(targettingAlly && ability.target == AbilityTarget.ENEMIES) continue;
+
+                    unitBehaviour.unitStats.health.Value -= ability.damageAmount; // Damage
+                    unitBehaviour.unitStats.health.Value += ability.healAmount; // Heal
+                }
+
+            }
+
+            Instantiate(ability.particlePrefab, GridManager.GetTileAtVector2Int(targetTilePos).worldPosition, Quaternion.identity);
+
+            Turn turn = GameManager.Instance.turnManager.turn;
+            GameManager.Instance.turnManager.SetTurnRpc(new Turn(){
+                hasMoved = turn.hasMoved,
+                hasPerformedAction = true
+            });
+
+            GetSelectedUnitBehaviour().isPerformingAction.Value = false;
+        });
+    }
+
+    public static GameObject GetSelectedUnit(){
+        return GameManager.Instance.unitManager.selectedUnit;
+    }
+
+    public static UnitBehaviour GetSelectedUnitBehaviour(){
+        return GameManager.Instance.unitManager.selectedUnit.GetComponent<UnitBehaviour>();
     }
 
 }

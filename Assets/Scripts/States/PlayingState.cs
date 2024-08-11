@@ -27,7 +27,7 @@ public class PlayingState : GameState
         TurnManager turnManager = GameManager.Instance.turnManager;
         PlayerInputManager playerInputManager = GameManager.Instance.playerInputManager;
 
-        if(turnManager.turn.hasAttacked &&
+        if(turnManager.turn.hasPerformedAction &&
            turnManager.turn.hasMoved &&
            !playerInputManager.lockInput)
         {

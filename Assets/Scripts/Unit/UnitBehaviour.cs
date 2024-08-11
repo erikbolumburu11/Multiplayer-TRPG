@@ -13,12 +13,13 @@ public class UnitBehaviour : NetworkBehaviour
     public UnitData unitData;
     public UnitStats unitStats;
     public NetworkVariable<ulong> ownerClientId;
-    public NetworkVariable<bool> isAttacking;
+    public NetworkVariable<bool> isPerformingAction;
     [SerializeField] Image teamIndicator;
     [SerializeField] Image healthBarFill;
     public GameObject selectionDecal;
     Animator animator;
     public ClientAuthNetworkAnimator clientAuthNetworkAnimator;
+    public Ability selectedAbility;
 
     void Start(){
         unitStats = GetComponent<UnitStats>();
@@ -59,7 +60,7 @@ public class UnitBehaviour : NetworkBehaviour
         if (ownerClientId.Value == NetworkManager.Singleton.LocalClientId)
         {
             // Is Unit Moving
-            if ((path != null && path.Count > 0) || tileMovingTo != null || isAttacking.Value) GameManager.Instance.playerInputManager.lockInput = true;
+            if ((path != null && path.Count > 0) || tileMovingTo != null || isPerformingAction.Value) GameManager.Instance.playerInputManager.lockInput = true;
             else GameManager.Instance.playerInputManager.lockInput = false;
 
         }

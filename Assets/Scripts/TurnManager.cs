@@ -5,12 +5,12 @@ using UnityEngine;
 
 public struct Turn : INetworkSerializable {
     public bool hasMoved;
-    public bool hasAttacked;
+    public bool hasPerformedAction;
 
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         serializer.SerializeValue(ref hasMoved);
-        serializer.SerializeValue(ref hasAttacked);
+        serializer.SerializeValue(ref hasPerformedAction);
     }
 }
 
@@ -19,7 +19,7 @@ public class TurnManager : NetworkBehaviour
     public NetworkVariable<ulong> currentPlayerClientId = new();
     public NetworkVariable<int> currentTurn = new();
     public Turn turn;
-    Dictionary<ulong, int> playersCurrentUnitMap;
+    public Dictionary<ulong, int> playersCurrentUnitMap;
 
     void Awake(){
         playersCurrentUnitMap = new();
@@ -59,18 +59,16 @@ public class TurnManager : NetworkBehaviour
     }
 
     public void SetSelectedUnit(int previous, int current){
+        if(!GameStateManager.CompareCurrentState(GameStateKey.PLAYING)) return;
+
         UnitManager unitManager = GameManager.Instance.unitManager;
         ulong currentPlayerClientId = GameManager.Instance.turnManager.currentPlayerClientId.Value;
         int currentTurn = GameManager.Instance.turnManager.currentTurn.Value;
 
-        if(!playersCurrentUnitMap.ContainsKey(currentPlayerClientId)){
-            playersCurrentUnitMap.Add(currentPlayerClientId, -1);
-        }
-
-        playersCurrentUnitMap[currentPlayerClientId]++;
         if(playersCurrentUnitMap[currentPlayerClientId] == unitManager.playerUnitMap[currentPlayerClientId].Count) playersCurrentUnitMap[currentPlayerClientId] = 0;
         unitManager.selectedUnit = unitManager.playerUnitMap[currentPlayerClientId][playersCurrentUnitMap[currentPlayerClientId]];
 
+        playersCurrentUnitMap[currentPlayerClientId]++;
     }
 
     public static bool IsMyTurn(){
