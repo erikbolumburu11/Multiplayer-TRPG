@@ -33,15 +33,16 @@ public class PlayerInputManager : NetworkBehaviour
 
 
     void Update(){
-
         if(GameStateManager.CompareCurrentState(GameStateKey.PLAYING)){
 
-            if(lockInput){
+            if(UnitManager.GetSelectedUnitBehaviour().isMoving.Value || 
+                UnitManager.GetSelectedUnitBehaviour().isPerformingAction.Value)
+            {
                 SetCommand(Command.NONE);
+                GridManager.HideAllTileOverlays();
                 return;
             }
-
-            if(Input.GetMouseButtonDown(0)){
+            else if(Input.GetMouseButtonDown(0)){
                 switch(selectedCommand){
                     case Command.MOVE: Move(); break;
                     case Command.BASIC_ATTACK: BasicAttack(); break;
@@ -54,6 +55,14 @@ public class PlayerInputManager : NetworkBehaviour
 
     public void SetCommand(Command newCommand){
         if(unitManager.selectedUnit == null) return;
+
+        if(UnitManager.GetSelectedUnitBehaviour().isMoving.Value || 
+            UnitManager.GetSelectedUnitBehaviour().isPerformingAction.Value)
+        {
+            GridManager.HideAllTileOverlays();
+            return;
+        } 
+
         Vector2Int unitTilePos = UnitManager.GetSelectedUnitBehaviour().occupyingTile.Value;
         GridTile unitTile = gridManager.tiles[unitTilePos.x, unitTilePos.y];
 

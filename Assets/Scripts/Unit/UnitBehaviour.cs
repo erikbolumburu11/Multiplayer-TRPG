@@ -13,6 +13,7 @@ public class UnitBehaviour : NetworkBehaviour
     public UnitData unitData;
     public UnitStats unitStats;
     public NetworkVariable<ulong> ownerClientId;
+    public NetworkVariable<bool> isMoving;
     public NetworkVariable<bool> isPerformingAction;
     [SerializeField] Image teamIndicator;
     [SerializeField] Image healthBarFill;
@@ -42,14 +43,19 @@ public class UnitBehaviour : NetworkBehaviour
 
     void Update()
     {
-        if (GameStateManager.CompareCurrentState(GameStateKey.PLAYING)) SetSelectionDecalVisibility();
+        if (GameStateManager.CompareCurrentState(GameStateKey.PLAYING)){
+            SetSelectionDecalVisibility();
+            LockInput();
+        }
         SetPlayerIndicatorColor(); 
-
-        LockInput();
 
         if (!IsServer) return;
 
+        if ((path != null && path.Count > 0) || tileMovingTo != null) isMoving.Value = true;
+        else isMoving.Value = false;
+
         if (unitStats.health.Value <= 0) UnitDeathRpc();
+
         Move();
         HasReachedNextTile();
         SetAnimatorParameters();
@@ -57,12 +63,12 @@ public class UnitBehaviour : NetworkBehaviour
 
     private void LockInput()
     {
-        if (ownerClientId.Value == NetworkManager.Singleton.LocalClientId)
-        {
-            // Is Unit Moving
-            if ((path != null && path.Count > 0) || tileMovingTo != null || isPerformingAction.Value) GameManager.Instance.playerInputManager.lockInput = true;
+        if(UnitManager.GetSelectedUnitBehaviour() == this){
+            if (isMoving.Value || isPerformingAction.Value) GameManager.Instance.playerInputManager.lockInput = true;
             else GameManager.Instance.playerInputManager.lockInput = false;
-
+        }
+        else {
+            GameManager.Instance.playerInputManager.lockInput = false;
         }
     }
 
