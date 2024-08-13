@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public class JoinUI : MonoBehaviour
+public class JoinUI : NetworkBehaviour
 {
     [SerializeField] GameObject joinSettingsObject;
     [SerializeField] NetworkManager networkManager;
@@ -20,6 +20,6 @@ public class JoinUI : MonoBehaviour
         joinSettingsObject.SetActive(false);
 
         GameManager.Instance.gameStateManager.stateMap[GameStateKey.SETUP].EnterState();
-        GameManager.Instance.gameStateManager.RequestStateChangeRpc(GameStateKey.SETUP);
+        // GameManager.Instance.gameStateManager.RequestStateChangeRpc(GameStateKey.SETUP);
     }
 }

@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class SetupState : GameState
 {
+    bool spawnzonesShown = false;
     protected override void Initialize()
     {
         stateUI = new SetupStateUI();
@@ -15,6 +16,10 @@ public class SetupState : GameState
     public override void Update(){
         if(GameManager.Instance.gameStateManager.state.Value != key) return;
         base.Update();
+
+        if(!spawnzonesShown && GameManager.Instance.playerManager.playerDatas.ContainsKey(NetworkManager.Singleton.LocalClientId)){
+            GameManager.Instance.gridManager.ShowSpawnZones();
+        }
 
         if(!IsServer) return;
 

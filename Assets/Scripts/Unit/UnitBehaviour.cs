@@ -31,7 +31,9 @@ public class UnitBehaviour : NetworkBehaviour
     }
 
     void SetPlayerIndicatorColor(){
-        if(NetworkManager.Singleton.LocalClientId == ownerClientId.Value){
+        Team unitTeam = GameManager.Instance.playerManager.playerDatas[ownerClientId.Value].team;
+        Team clientTeam = GameManager.Instance.playerManager.playerDatas[NetworkManager.Singleton.LocalClientId].team;
+        if(unitTeam == clientTeam){
             teamIndicator.color = Color.green;
             healthBarFill.color = Color.green;
         }

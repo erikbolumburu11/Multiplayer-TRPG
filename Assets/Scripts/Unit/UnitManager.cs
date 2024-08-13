@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using CartoonFX;
 using Unity.Mathematics;
 using Unity.Netcode;
 using Unity.VisualScripting;
@@ -64,9 +65,10 @@ public class UnitManager : NetworkBehaviour
         GameObject objOnTile = GridManager.GetTilesOccupyingObject(targetTilePos);
 
         if(objOnTile.TryGetComponent(out UnitBehaviour unitBehaviour)){
-
             // Check if friendly fire
-            if(GetSelectedUnit().GetComponent<UnitBehaviour>().ownerClientId.Value == unitBehaviour.ownerClientId.Value) return;
+            Team attackerTeam = GameManager.Instance.playerManager.playerDatas[GetSelectedUnit().GetComponent<UnitBehaviour>().ownerClientId.Value].team;
+            Team targetTeam = GameManager.Instance.playerManager.playerDatas[unitBehaviour.ownerClientId.Value].team;
+            if(attackerTeam == targetTeam) return;
 
             unitBehaviour.isPerformingAction.Value = true;
 
@@ -117,25 +119,28 @@ public class UnitManager : NetworkBehaviour
                 if(objOnTile == null) continue;
 
                 if(objOnTile.TryGetComponent(out UnitBehaviour unitBehaviour)){
-                    bool targettingAlly = GetSelectedUnitBehaviour().ownerClientId.Value == unitBehaviour.ownerClientId.Value;
+                    Team attackerTeam = GameManager.Instance.playerManager.playerDatas[GetSelectedUnit().GetComponent<UnitBehaviour>().ownerClientId.Value].team;
+                    Team targetTeam = GameManager.Instance.playerManager.playerDatas[unitBehaviour.ownerClientId.Value].team;
+
+                    bool targettingAlly = attackerTeam == targetTeam;
+
                     if(targettingAlly && ability.target == AbilityTarget.ENEMIES) continue;
 
                     unitBehaviour.unitStats.health.Value -= ability.damageAmount; // Damage
                     unitBehaviour.unitStats.health.Value += ability.healAmount; // Heal
                 }
-
             }
 
             GameObject particleEffect = Instantiate(ability.particlePrefab, GridManager.GetTileAtVector2Int(targetTilePos).worldPosition, Quaternion.identity);
             particleEffect.GetComponent<NetworkObject>().Spawn();
+
+            GetSelectedUnitBehaviour().isPerformingAction.Value = false;
 
             Turn turn = GameManager.Instance.turnManager.turn;
             GameManager.Instance.turnManager.SetTurnRpc(new Turn(){
                 hasMoved = turn.hasMoved,
                 hasPerformedAction = true
             });
-
-            GetSelectedUnitBehaviour().isPerformingAction.Value = false;
         });
     }
 

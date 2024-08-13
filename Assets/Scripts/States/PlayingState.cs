@@ -6,6 +6,7 @@ public class PlayingState : GameState
 {
     protected override void Initialize()
     {
+        GridManager.HideAllTileOverlays();
         stateUI = new PlayingStateUI();
         key = GameStateKey.PLAYING;
     }

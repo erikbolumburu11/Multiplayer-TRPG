@@ -12,10 +12,17 @@ public class PlayerPartyManager : NetworkBehaviour
     GameObject instantiatedUnitPlacementPreview;
 
     void Update(){
-        if(GameManager.Instance.gameStateManager.state.Value != GameStateKey.SETUP || !TurnManager.IsMyTurn()){
+        if(!GameManager.Instance.playerManager.playerDatas.ContainsKey(NetworkManager.Singleton.LocalClientId)) return;
+
+        if(!GameStateManager.CompareCurrentState(GameStateKey.SETUP) ||
+            !TurnManager.IsMyTurn() ||
+            PlayerInputManager.GetHoveredTile() == null ||
+            !GameManager.Instance.gridManager.spawnZoneTiles[GameManager.Instance.playerManager.playerDatas[NetworkManager.Singleton.LocalClientId].team].Contains(PlayerInputManager.GetHoveredTile())
+        ){
             if(instantiatedUnitPlacementPreview != null) Destroy(instantiatedUnitPlacementPreview);
             return;
         } 
+
         if(selectedUnitCard == null && instantiatedUnitPlacementPreview != null) Destroy(instantiatedUnitPlacementPreview);
 
         if(selectedUnitCard != null && instantiatedUnitPlacementPreview == null){
@@ -29,13 +36,16 @@ public class PlayerPartyManager : NetworkBehaviour
         }
 
         if(Input.GetMouseButtonDown(0)){
+            GridTile targetTile = PlayerInputManager.GetHoveredTile();
+            Team clientTeam = GameManager.Instance.playerManager.playerDatas[NetworkManager.Singleton.LocalClientId].team;
             if(selectedUnitCard != null && 
-                PlayerInputManager.GetHoveredTile() != null &&
-                PlayerInputManager.GetHoveredTile().walkable &&
-                GridManager.GetTilesOccupyingObject(PlayerInputManager.GetHoveredTile().gridPosition) == null)
+                targetTile != null &&
+                targetTile.walkable &&
+                GameManager.Instance.gridManager.spawnZoneTiles[clientTeam].Contains(targetTile) &&
+                GridManager.GetTilesOccupyingObject(targetTile.gridPosition) == null)
             {
-                GameObject go = GridManager.GetTilesOccupyingObject(PlayerInputManager.GetHoveredTile().gridPosition);
-                GameManager.Instance.unitManager.SpawnUnitRpc(selectedUnitCard.prefabResourceDir, PlayerInputManager.GetHoveredTile().gridPosition);
+                GameObject go = GridManager.GetTilesOccupyingObject(targetTile.gridPosition);
+                GameManager.Instance.unitManager.SpawnUnitRpc(selectedUnitCard.prefabResourceDir, targetTile.gridPosition);
                 unitHand.Remove(selectedUnitCard);
                 GameManager.Instance.UIElements.unitCards.GetComponent<UnitCardList>().RemoveCard(selectedUnitCard);
                 selectedUnitCard = null;

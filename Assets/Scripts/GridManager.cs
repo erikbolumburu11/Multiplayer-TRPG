@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public enum TileOverlayLayerID {
+    SPAWN_ZONE_USABLE,
+    SPAWN_ZONE_UNUSABLE,
     RANGE_INDICATOR,
     AFFECTED_TILES
 }
@@ -62,6 +64,16 @@ public class GridTile {
         this.gridPosition = gridPosition;
         worldPosition = new Vector3((gridPosition.x * tileSize) + tileSize / 2, 0, (gridPosition.y * tileSize) + tileSize / 2);
         walkable = !Physics.CheckSphere(worldPosition, (tileSize / 2) - 0.1f, GameManager.Instance.gridManager.unwalkableMask);
+
+        // Check For Spawnzone
+        Collider[] colliders = Physics.OverlapSphere(worldPosition, (tileSize / 2) - 0.1f, GameManager.Instance.gridManager.spawnZoneMask);
+        foreach (Collider collider in colliders)
+        {
+            if(collider.TryGetComponent(out SpawnZone spawnZone)){
+                Team team = spawnZone.team;
+                GameManager.Instance.gridManager.spawnZoneTiles[team].Add(this);
+            }
+        }
     }
 
     public void ShowOverlay(Color color){
@@ -95,7 +107,9 @@ public class GridManager : MonoBehaviour
     public Vector2Int gridSize;
     public float tileSize;
     public GridTile[,] tiles;
+    public Dictionary<Team, List<GridTile>> spawnZoneTiles;
     public LayerMask unwalkableMask;
+    public LayerMask spawnZoneMask;
     [SerializeField] GameObject tileOverlayPrefab;
     [SerializeField] Transform tileOverlayParentTransform;
     public Dictionary<TileOverlayLayerID, TileOverlayLayer> tileOverlayLayersMap;
@@ -104,7 +118,14 @@ public class GridManager : MonoBehaviour
         tileOverlayLayersMap = new()
         {
             { TileOverlayLayerID.RANGE_INDICATOR, new(TileOverlayLayerID.RANGE_INDICATOR) },
-            { TileOverlayLayerID.AFFECTED_TILES, new(TileOverlayLayerID.AFFECTED_TILES) }
+            { TileOverlayLayerID.AFFECTED_TILES, new(TileOverlayLayerID.AFFECTED_TILES) },
+            { TileOverlayLayerID.SPAWN_ZONE_USABLE, new(TileOverlayLayerID.SPAWN_ZONE_USABLE){ color = Color.blue } },
+            { TileOverlayLayerID.SPAWN_ZONE_UNUSABLE, new(TileOverlayLayerID.SPAWN_ZONE_UNUSABLE){ color = Color.red } },
+        };
+        spawnZoneTiles = new()
+        {
+            { Team.TEAM_ONE, new() },
+            { Team.TEAM_TWO, new() },
         };
     }
 
@@ -122,6 +143,29 @@ public class GridManager : MonoBehaviour
                 tiles[x, y].overlayImage = Instantiate(tileOverlayPrefab, tiles[x, y].worldPosition, Quaternion.identity, tileOverlayParentTransform).GetComponentInChildren<Image>();
             }
         }
+    }
+
+    public void ShowSpawnZones(){
+        GridManager gridManager = GameManager.Instance.gridManager;
+
+        TileOverlayLayer usableSpawnzone = gridManager.tileOverlayLayersMap[TileOverlayLayerID.SPAWN_ZONE_USABLE];
+        TileOverlayLayer unusableSpawnzone = gridManager.tileOverlayLayersMap[TileOverlayLayerID.SPAWN_ZONE_UNUSABLE];
+
+        Team clientTeam = GameManager.Instance.playerManager.playerDatas[NetworkManager.Singleton.LocalClientId].team;
+
+        List<GridTile> unusableSpawnTiles = new();
+        foreach (Team team in gridManager.spawnZoneTiles.Keys)
+        {
+            if(team == clientTeam) continue;
+
+            unusableSpawnTiles.AddRange(gridManager.spawnZoneTiles[team]);
+        }
+
+        usableSpawnzone.highlightedTiles = gridManager.spawnZoneTiles[clientTeam];
+        unusableSpawnzone.highlightedTiles = unusableSpawnTiles;
+
+        usableSpawnzone.ShowTileOverlays();
+        unusableSpawnzone.ShowTileOverlays();
     }
 
     public static List<GridTile> GetAdjacentTiles(Vector2Int tileGridPos){

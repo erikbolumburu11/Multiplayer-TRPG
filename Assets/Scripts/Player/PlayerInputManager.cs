@@ -31,8 +31,8 @@ public class PlayerInputManager : NetworkBehaviour
         if(!IsOwner) return;
     }
 
-
     void Update(){
+        // if(!IsOwner || !IsSpawned) return;
         if(GameStateManager.CompareCurrentState(GameStateKey.PLAYING)){
 
             if(UnitManager.GetSelectedUnitBehaviour().isMoving.Value || 
@@ -170,9 +170,11 @@ public class PlayerInputManager : NetworkBehaviour
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
         if(!GameManager.Instance.unitManager.playerUnitMap.ContainsKey(clientId)){
+
             GameManager.Instance.unitManager.playerUnitMap.Add(clientId, new());
-            GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId));
+            GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId, (int)clientId % 2 == 0 ? Team.TEAM_ONE : Team.TEAM_TWO));
             GameManager.Instance.turnManager.playersCurrentUnitMap.Add(clientId, 0);
+
         }
     }
 
