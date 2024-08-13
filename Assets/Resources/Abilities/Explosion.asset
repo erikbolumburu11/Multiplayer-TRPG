@@ -19,6 +19,6 @@ MonoBehaviour:
   castRange: 4
   effectRange: 2
   target: 0
-  particlePrefab: {fileID: 3398811575671132622, guid: cad2a46cf5510f847a50a2c97b6d9184, type: 3}
+  particlePrefab: {fileID: 4593184484909914552, guid: 2e1e9506f5904a64b81744324fb7cd50, type: 3}
   damageAmount: 200
   healAmount: 0

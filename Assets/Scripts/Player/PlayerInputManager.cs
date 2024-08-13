@@ -180,10 +180,17 @@ public class PlayerInputManager : NetworkBehaviour
 
     public static GridTile GetHoveredTile(){
         GridManager gridManager = GameManager.Instance.gridManager;
-        RaycastHit hit;
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out hit, GameManager.Instance.groundLayer)) {
-            Vector2Int hoveredTilePos = new Vector2Int((int)Mathf.Floor(hit.point.x) / (int)gridManager.tileSize, (int)Mathf.Floor(hit.point.z) / (int)gridManager.tileSize);
+
+        int groundlayerMask = GameManager.Instance.groundLayer;
+
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundlayerMask)) {
+
+            Vector2Int hoveredTilePos = new Vector2Int(
+                Mathf.FloorToInt(hit.point.x / (int)gridManager.tileSize),
+                Mathf.FloorToInt(hit.point.z / (int)gridManager.tileSize)
+            );
+
             return gridManager.tiles[hoveredTilePos.x, hoveredTilePos.y];
         }
         else return null;

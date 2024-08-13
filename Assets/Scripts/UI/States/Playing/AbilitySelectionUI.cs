@@ -61,7 +61,7 @@ public class AbilitySelectionUI : MonoBehaviour
 
     public void BackToCommandSelection(){
         GridManager.HideAllTileOverlays();
-        GameManager.Instance.UIElements.setupUIObject.SetActive(true);
+        GameManager.Instance.UIElements.playingUIObject.SetActive(true);
         gameObject.SetActive(false);
     }
 }

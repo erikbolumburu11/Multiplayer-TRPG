@@ -7,6 +7,7 @@ public class PlayingState : GameState
     protected override void Initialize()
     {
         GridManager.HideAllTileOverlays();
+        GameManager.Instance.UIElements.setupUIObject.SetActive(false);
         stateUI = new PlayingStateUI();
         key = GameStateKey.PLAYING;
     }
