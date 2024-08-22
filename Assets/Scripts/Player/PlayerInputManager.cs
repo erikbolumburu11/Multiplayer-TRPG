@@ -173,7 +173,7 @@ public class PlayerInputManager : NetworkBehaviour
 
             GameManager.Instance.unitManager.playerUnitMap.Add(clientId, new());
             GameManager.Instance.playerManager.playerDatas.Add(clientId, new(clientId, (int)clientId % 2 == 0 ? Team.TEAM_ONE : Team.TEAM_TWO));
-            GameManager.Instance.turnManager.playersCurrentUnitMap.Add(clientId, 0);
+            GameManager.Instance.turnManager.playersCurrentUnitMap.Add(clientId, -1);
 
         }
     }

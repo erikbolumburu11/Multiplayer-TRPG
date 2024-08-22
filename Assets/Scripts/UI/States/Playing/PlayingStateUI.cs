@@ -7,6 +7,7 @@ public class PlayingStateUI : GameStateUI
     public override void EnterState()
     {
         base.EnterState();
+        GameManager.Instance.UIElements.setupUIObject.SetActive(false);
         uiElements.playingUIObject.SetActive(true);
     }
 

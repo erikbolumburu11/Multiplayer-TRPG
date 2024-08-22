@@ -6,6 +6,7 @@ using UnityEngine;
 public class UnitData : ScriptableObject
 {
     public string unitName;
+    public Sprite portraitSprite;
     public int maxHealth;
     public int moveRange;
     public int basicAttackRange;

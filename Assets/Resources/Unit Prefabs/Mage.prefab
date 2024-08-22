@@ -724,6 +724,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Mage
       objectReference: {fileID: 0}
+    - target: {fileID: 2677596514934467036, guid: 5ba1f6ea6c2fc22428e4e73a6de09c65, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -833,10 +837,15 @@ MonoBehaviour:
   unitStats: {fileID: 0}
   ownerClientId:
     m_InternalValue: 0
+  isMoving:
+    m_InternalValue: 0
+  isPerformingAction:
+    m_InternalValue: 0
   teamIndicator: {fileID: 7307500271810579629}
   healthBarFill: {fileID: 7797679242890731929}
   selectionDecal: {fileID: 8145065336961391157}
   clientAuthNetworkAnimator: {fileID: 0}
+  selectedAbility: {fileID: 0}
 --- !u!114 &-2002822872154854517
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Rogue
   m_EditorClassIdentifier: 
   unitName: Rogue
+  portraitSprite: {fileID: 21300000, guid: 329c2a7c1b2fb134c902b1c717bd8dda, type: 3}
   maxHealth: 400
   moveRange: 5
   basicAttackRange: 7
   speed: 6
   prefabResourceDir: Unit Prefabs/Rogue
+  abilities: []

@@ -12,4 +12,5 @@ public class UIElements : MonoBehaviour
     [Header("Playing State")]
     public GameObject playingUIObject;
     public GameObject abilityMenuUIObject;
+    public GameObject unitTurnListObject;
 }
